@@ -63,7 +63,11 @@ void atender_consola(char* leido)
 			rutaTareas = readline(">");
 
 			listaDeTareas = list_create();
-			listaDeTareas = leerArchivoDeTareas(rutaTareas);
+			listaDeTareas = leerArchivoDeTareasReturnTareasList(rutaTareas);
+
+			char* todasLasTareasEnUnChar = archivo_leer(rutaTareas);
+
+			printf("si tengo un solo char con todas las tareas, me queda asi: \n %s", todasLasTareasEnUnChar);
 
 			patota = crearPatota(idsPatota, (uint32_t)0, cantTripulantes); //el 0 es la posicion de memoria de las tareas
 			list_add(listaDePatotas, patota);
@@ -104,7 +108,9 @@ void atender_consola(char* leido)
 				list_iterate(patota->tripulantes, iteradorDeTripulantes);
 			}
 
-			printf("Estado de la Nave \n ");
+			fecha = temporal_get_string_time("%d/%m/%y %H:%M:%S");
+
+			printf("Estado de la Nave \t %s \n ", fecha);
 
 
 			list_iterate(listaDePatotas, iteradorDePatotas);

@@ -17,6 +17,7 @@
 #include<pthread.h>
 #include<semaphore.h>
 #include<commons/string.h>
+#include<commons/temporal.h>
 #include<unistd.h>
 #include<netdb.h>
 
@@ -46,6 +47,8 @@ typedef struct
 t_list* listaDePatotas;
 uint32_t idsPatota;
 uint32_t idsTripulante;
+
+char* fecha;
 
 void leer_consola(void);
 void atender_consola(char*);

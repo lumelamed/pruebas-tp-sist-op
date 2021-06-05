@@ -26,6 +26,9 @@ typedef struct
 
 char* leer_nombreTarea(FILE*);
 char* leer_numeros(FILE*);
-t_list* leerArchivoDeTareas(char* path);
+t_list* leerArchivoDeTareasReturnTareasList(char* );
+char* leerArchivoDeTareas(char* );
+int archivo_obtenerTamanio(char*);
+char*archivo_leer(char*);
 
 #endif /* PRUEBITA_LEER_ARCHIVOS_H_ */

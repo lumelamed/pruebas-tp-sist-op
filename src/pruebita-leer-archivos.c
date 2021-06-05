@@ -71,7 +71,7 @@ char* leer_numeros(FILE* archivo){
 	return linea;
 }
 
-t_list* leerArchivoDeTareas(char* path){
+t_list* leerArchivoDeTareasReturnTareasList(char* path){
 
 		FILE* fArchivoTareas = fopen(path,"r");
 
@@ -177,3 +177,49 @@ t_list* leerArchivoDeTareas(char* path){
 		return listaTareas;
 }
 
+char* leerArchivoDeTareas(char* pathArchivoTareas) {
+
+	FILE* fArchivoTareas = fopen(pathArchivoTareas,"r");
+
+	Tarea* tarea = malloc(sizeof(Tarea) + sizeof(char*));
+
+	char* todasLasTareas = string_new();
+
+	char* nombreTarea = leer_nombreTarea(fArchivoTareas);
+
+	/*	FORMATO ESPERADO: TAREA PARAMETROS;POSX;POSY;TIEMPO  --> notar: espacio entre tarea y params y ENTER al final del archivo */
+
+	while(strcmp(nombreTarea, "FIN") != 0){
+		string_append(&todasLasTareas, nombreTarea);
+		//string_append(&todasLasTareas, ' ');
+		for(int i = 0; i < 4; i++){ // hay 4 'parametros'
+			string_append(&todasLasTareas, leer_numeros(fArchivoTareas));
+			//string_append(&todasLasTareas, '\n');
+		}
+		nombreTarea = leer_nombreTarea(fArchivoTareas);
+	}
+
+	fclose(fArchivoTareas);
+
+	return todasLasTareas;
+}
+
+
+int archivo_obtenerTamanio(char*path){
+	FILE* f = fopen(path,"r");
+	fseek(f, 0L, SEEK_END);
+	int i = ftell(f);
+	fclose(f);
+	return i;
+}
+
+char*archivo_leer(char*path){
+	FILE*archivo=fopen(path,"r");
+
+	int tamanio= archivo_obtenerTamanio(path);
+	char*texto = malloc(tamanio+1);
+	fread(texto,tamanio,sizeof(char),archivo);
+	fclose(archivo);
+	texto[tamanio]='\0';
+	return texto;
+}
