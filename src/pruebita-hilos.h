@@ -49,6 +49,7 @@ uint32_t idsPatota;
 uint32_t idsTripulante;
 
 char* fecha;
+const char* tareasDeIO = "GENERAR_OXIGENO CONSUMIR_OXIGENO GENERAR_COMIDA CONSUMIR_COMIDA GENERAR_BASURA DESCARTAR_BASURA";
 
 void leer_consola(void);
 void atender_consola(char*);
@@ -57,5 +58,7 @@ void crearTripulante(uint32_t , char , uint32_t , uint32_t , uint32_t , uint32_t
 Patota* crearPatota(uint32_t , uint32_t ,int );
 void eliminarUnTrip(t_list* , Tripulante* );
 Tripulante* buscarTripulantePorId(uint32_t );
+Tarea pedirTarea (Tripulante*, char*);
+void hacerMovimientoDePosiciones(Tripulante*, Tarea);
 
 #endif /* PRUEBITA_HILOS_H_ */

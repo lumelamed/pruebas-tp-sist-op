@@ -20,6 +20,7 @@ typedef struct
 	int 		posX;
 	int 		posY;
 	int  		tiempo;
+	bool		esDeIO;
 } Tarea;
 
 //GENERAR_OXIGENO 12;2;3;5

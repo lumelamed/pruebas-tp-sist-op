@@ -26,6 +26,7 @@ void leer_consola(void)
 	printf("Para LISTAR_TRIPULANTES ingrese 1 \n");
 	printf("Para EXPULSAR_TRIPULANTE ingrese 2 \n");
 	printf("Para ver la info de un trip en particular ingrese 3 \n");
+	printf("Para decir una tarea y ver movimientos de posiciones 4 \n");
 
 	printf("Consola escuchando");
 
@@ -53,7 +54,6 @@ void atender_consola(char* leido)
 			char* rutaTareas;
 			char* posicionEnMemoria;
 			Patota* patota;
-			t_list* listaDeTareas;
 
 			//PIDO PARAMETROS
 			printf("Ingrese la cantidad de tripulantes que quieras tener en la patota");
@@ -61,9 +61,6 @@ void atender_consola(char* leido)
 
 			printf("Ingrese la ruta del archivo de tareas");
 			rutaTareas = readline(">");
-
-			listaDeTareas = list_create();
-			listaDeTareas = leerArchivoDeTareasReturnTareasList(rutaTareas);
 
 			char* todasLasTareasEnUnChar = archivo_leer(rutaTareas);
 
@@ -142,8 +139,36 @@ void atender_consola(char* leido)
 			printf("SOCKET MONGO: %d \n", tripulante->socket_Mongo);
 
 			break;
+		case 4:;
+			uint32_t idTripulante;
+			Tripulante* trip = malloc(sizeof(Tripulante));
+			char* unaTarea;
+			Tarea tarea;
+
+			printf("Ingrese un id de trip");
+			idTripulante =(uint32_t)atoi(readline(">"));
+			trip = buscarTripulantePorId(idTripulante);
+
+			printf("TRIPULANTE ENCONTRADO: \n");
+			printf("TID: %d \n", trip->TID);
+			printf("ESTADO: %c \n", trip->estado);
+			printf("POS X: %d \n", trip->posicionX);
+			printf("POS Y: %d \n", trip->posicionY);
+			printf("PROXIMA INST: %d \n", trip->proximaInstruccion);
+			printf("PUNTERO PCB: %d \n", *(trip->punteroPCB));
+			printf("SOCKET RAM: %d \n", trip->socket_RAM);
+			printf("SOCKET MONGO: %d \n", trip->socket_Mongo);
+
+			printf("Ingresar una tarea");
+			unaTarea = readline(">");
+
+			tarea = pedirTarea (trip, unaTarea);
+
+			hacerMovimientoDePosiciones(trip, tarea);
+
+			break;
 		default:;
-		printf("esta prueba solo lee los numeros 0, 1, 2, 3");
+		printf("esta prueba solo lee los numeros 0, 1, 2, 3, 4");
 		break;
 	}
 }
@@ -184,16 +209,6 @@ void crearTripulante(uint32_t TID, char estado, uint32_t x, uint32_t y, uint32_t
 	tripulante->socket_Mongo = 0; //crear_conexion(IPiMongo, puertoImongo);
 
 	list_add(patota->tripulantes, tripulante);
-
-	printf("TRIPULANTE CREADO: \n");
-	printf("TID: %d \n", tripulante->TID);
-	printf("ESTADO: %c \n", tripulante->estado);
-	printf("POS X: %d \n", tripulante->posicionX);
-	printf("POS Y: %d \n", tripulante->posicionY);
-	printf("PROXIMA INST: %d \n", tripulante->proximaInstruccion);
-	printf("PUNTERO PCB: %d \n", *(tripulante->punteroPCB));
-	printf("SOCKET RAM: %d \n", tripulante->socket_RAM);
-	printf("SOCKET MONGO: %d \n", tripulante->socket_Mongo);
 
 
 	printf("aca se supone que lo agrega al estado new \n");
@@ -248,4 +263,113 @@ Tripulante* buscarTripulantePorId(uint32_t id){
 	list_iterate(listaDePatotas, iteradorDePatotas);
 
 	return tripulante;
+}
+
+
+Tarea pedirTarea (Tripulante* trip, char* tareaPorParam){
+
+	Tarea tarea;
+	char**  tareaArray = string_split(tareaPorParam, ";");
+	//GENERAR_OXIGENO 12;2;3;5
+	// ["GENERAR_OXIGENO 12", "2", "3", "5"]
+	// o sino, REGAR_PLANTAS;2;3;5
+	// ["REGAR_PLANTAS", "2", "3", "5"]
+
+	if(string_contains(tareaArray[0], " ")){
+		char ** nombreYParams = string_split(tareaArray[0], " ");
+		tarea.nombreTarea = nombreYParams[0];
+		tarea.parametros = atoi(nombreYParams[1]);
+	}
+	else {
+		tarea.nombreTarea = tareaArray[0];
+		tarea.parametros = 0;
+	}
+
+	tarea.posX = atoi(tareaArray[1]);
+	tarea.posY = atoi(tareaArray[2]);
+	tarea.tiempo = atoi(tareaArray[3]);
+
+	tarea.esDeIO = string_contains(tareasDeIO, tarea.nombreTarea) ? true : false;
+
+	return tarea;
+}
+
+void hacerMovimientoDePosiciones(Tripulante* trip, Tarea tarea){
+	char* movimientoParaBitacora = string_new();
+	char* posiInicial = string_new();
+	char* posiFinal = string_new();
+
+	string_append(&posiInicial, string_itoa(trip->posicionX));
+	string_append(&posiInicial, "|");
+	string_append(&posiInicial, string_itoa(trip->posicionY));
+
+	string_append(&posiFinal, string_itoa(tarea.posX));
+	string_append(&posiFinal, "|");
+	string_append(&posiFinal, string_itoa(tarea.posY));
+
+	// posicion x
+
+	if(tarea.posX > trip->posicionX){
+		for(int x = trip->posicionX; x < tarea.posX; x++){
+			string_append(&movimientoParaBitacora, "Me muevo de ");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionX));
+			string_append(&movimientoParaBitacora, "|");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionY));
+			string_append(&movimientoParaBitacora, " a ");
+			string_append(&movimientoParaBitacora, string_itoa(x + 1));
+			string_append(&movimientoParaBitacora, "|");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionY));
+			string_append(&movimientoParaBitacora, "\n");
+			trip->posicionX = x + 1;
+		}
+	}
+	else {
+		for(int x = trip->posicionX; x > tarea.posX; x--){
+			string_append(&movimientoParaBitacora, "Me muevo de ");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionX));
+			string_append(&movimientoParaBitacora, "|");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionY));
+			string_append(&movimientoParaBitacora, " a ");
+			string_append(&movimientoParaBitacora, string_itoa(x - 1));
+			string_append(&movimientoParaBitacora, "|");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionY));
+			string_append(&movimientoParaBitacora, "\n");
+			trip->posicionX = x - 1;
+		}
+	}
+
+	// posicion Y
+
+	if(tarea.posY > trip->posicionY){
+		for(int y = trip->posicionY; y < tarea.posY; y++){
+			string_append(&movimientoParaBitacora, "Me muevo de ");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionX));
+			string_append(&movimientoParaBitacora, "|");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionY));
+			string_append(&movimientoParaBitacora, " a ");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionX));
+			string_append(&movimientoParaBitacora, "|");
+			string_append(&movimientoParaBitacora, string_itoa(y + 1));
+			string_append(&movimientoParaBitacora, "\n");
+			trip->posicionY = y + 1;
+		}
+	}
+	else {
+		for(int y = trip->posicionY; y > tarea.posY; y--){
+			string_append(&movimientoParaBitacora, "Me muevo de ");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionX));
+			string_append(&movimientoParaBitacora, "|");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionY));
+			string_append(&movimientoParaBitacora, " a ");
+			string_append(&movimientoParaBitacora, string_itoa(trip->posicionX));
+			string_append(&movimientoParaBitacora, "|");
+			string_append(&movimientoParaBitacora, string_itoa(y - 1));
+			string_append(&movimientoParaBitacora, "\n");
+			trip->posicionY = y - 1;
+		}
+	}
+
+	printf("Se movio el tripulante %d de %s a %s\n", trip->TID, posiInicial, posiFinal);
+
+	printf("Mensaje: %s\n", movimientoParaBitacora);
 }
